@@ -46,7 +46,6 @@ router.post("/new", async (req, res) => {
       status: game.status,
       startedAt: game.startedAt,
       elapsed: game.elapsed,
-      mistakes: game.mistakes,
     });
   } catch (err) {
     console.error("New game error:", err);
@@ -56,6 +55,10 @@ router.post("/new", async (req, res) => {
 
 /* ------------------------------------------------------------------ */
 /*  POST /api/game/:id/move  — place a number                         */
+/*                                                                     */
+/*  Any number 1-9 is accepted and placed on the board without         */
+/*  revealing whether it is correct. The game only completes when      */
+/*  the entire board matches the solution.                             */
 /* ------------------------------------------------------------------ */
 
 router.post("/:id/move", async (req, res) => {
@@ -78,7 +81,16 @@ router.post("/:id/move", async (req, res) => {
         .json({ error: "row, col, and value are required" });
     }
 
-    // Update elapsed time from the client (server trusts this loosely)
+    // Validate bounds
+    if (row < 0 || row > 8 || col < 0 || col > 8) {
+      return res.status(400).json({ error: "row and col must be 0-8" });
+    }
+
+    if (value < 0 || value > 9) {
+      return res.status(400).json({ error: "value must be 0-9" });
+    }
+
+    // Update elapsed time from the client
     if (typeof elapsed === "number" && elapsed >= 0) {
       game.elapsed = elapsed;
     }
@@ -90,40 +102,11 @@ router.post("/:id/move", async (req, res) => {
         .json({ error: "Cannot modify a pre-filled cell" });
     }
 
-    // Value of 0 means erase
-    if (value === 0) {
-      game.current[row][col] = 0;
-      await store.updateGame(game.id, {
-        current: game.current,
-        elapsed: game.elapsed,
-      });
-      return res.status(200).json({
-        correct: null,
-        current: game.current,
-        status: game.status,
-        mistakes: game.mistakes,
-      });
-    }
+    // Place the number (or erase with 0) — no correctness feedback
+    game.current[row][col] = value;
 
-    const { valid, correct } = sudoku.validateMove(
-      game.solution,
-      row,
-      col,
-      value,
-    );
-
-    if (!valid) {
-      return res.status(400).json({ error: "Invalid move parameters" });
-    }
-
-    if (correct) {
-      game.current[row][col] = value;
-    } else {
-      game.mistakes++;
-    }
-
-    // Check if the board is now complete
-    if (correct && sudoku.isBoardComplete(game.current, game.solution)) {
+    // Check if the entire board now matches the solution
+    if (value !== 0 && sudoku.isBoardComplete(game.current, game.solution)) {
       game.status = "completed";
       game.completedAt = Date.now();
 
@@ -132,7 +115,6 @@ router.post("/:id/move", async (req, res) => {
         status: game.status,
         completedAt: game.completedAt,
         elapsed: game.elapsed,
-        mistakes: game.mistakes,
       });
 
       await store.addLeaderboardEntry({
@@ -141,22 +123,19 @@ router.post("/:id/move", async (req, res) => {
         username: req.user.username,
         difficulty: game.difficulty,
         time: game.elapsed,
-        mistakes: game.mistakes,
+        mistakes: 0,
         completedAt: new Date(game.completedAt).toISOString(),
       });
     } else {
       await store.updateGame(game.id, {
         current: game.current,
         elapsed: game.elapsed,
-        mistakes: game.mistakes,
       });
     }
 
     return res.status(200).json({
-      correct,
       current: game.current,
       status: game.status,
-      mistakes: game.mistakes,
       completedAt: game.completedAt,
     });
   } catch (err) {
@@ -186,12 +165,11 @@ router.get("/:id", async (req, res) => {
       status: game.status,
       startedAt: game.startedAt,
       elapsed: game.elapsed,
-      mistakes: game.mistakes,
       completedAt: game.completedAt,
     };
 
-    // Only reveal solution if game is completed
-    if (game.status === "completed") {
+    // Only reveal solution if game is finished
+    if (game.status === "completed" || game.status === "abandoned") {
       response.solution = game.solution;
     }
 

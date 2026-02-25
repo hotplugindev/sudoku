@@ -14,7 +14,6 @@ export const useGameStore = defineStore("game", () => {
   const current = ref<number[][]>([]);
   const locked = ref<boolean[][]>([]);
   const status = ref<GameStatus>("idle");
-  const mistakes = ref(0);
   const elapsed = ref(0);
   const selectedCell = ref<{ row: number; col: number } | null>(null);
   const completedAt = ref<number | null>(null);
@@ -48,7 +47,9 @@ export const useGameStore = defineStore("game", () => {
   });
 
   const isPlaying = computed(() => status.value === "in_progress");
-  const isFinished = computed(() => status.value === "completed" || status.value === "abandoned");
+  const isFinished = computed(
+    () => status.value === "completed" || status.value === "abandoned",
+  );
 
   /* ── Actions ───────────────────────────────────────────────────────── */
 
@@ -62,7 +63,6 @@ export const useGameStore = defineStore("game", () => {
     current.value = data.current;
     locked.value = data.locked;
     status.value = "in_progress";
-    mistakes.value = data.mistakes;
     elapsed.value = 0;
     selectedCell.value = null;
     completedAt.value = null;
@@ -82,7 +82,6 @@ export const useGameStore = defineStore("game", () => {
     });
 
     current.value = data.current;
-    mistakes.value = data.mistakes;
 
     if (data.status === "completed") {
       status.value = "completed";
@@ -107,10 +106,6 @@ export const useGameStore = defineStore("game", () => {
   }
 
   function selectCell(row: number, col: number) {
-    if (locked.value[row]?.[col]) {
-      selectedCell.value = { row, col };
-      return;
-    }
     selectedCell.value = { row, col };
   }
 
@@ -121,7 +116,6 @@ export const useGameStore = defineStore("game", () => {
     current.value = [];
     locked.value = [];
     status.value = "idle";
-    mistakes.value = 0;
     elapsed.value = 0;
     selectedCell.value = null;
     completedAt.value = null;
@@ -134,7 +128,6 @@ export const useGameStore = defineStore("game", () => {
     current,
     locked,
     status,
-    mistakes,
     elapsed,
     selectedCell,
     completedAt,
