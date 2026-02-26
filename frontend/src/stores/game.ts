@@ -28,7 +28,7 @@ export const useGameStore = defineStore("game", () => {
 
   /* Pencil / notes — purely client-side */
   const pencilMode = ref(false);
-  const greyOutCompleted = ref(true);
+  const greyOutCompleted = ref(false);
   const notes = reactive<Set<number>[][]>(createEmptyNotes());
 
   /* ── Timer ─────────────────────────────────────────────────────────── */
