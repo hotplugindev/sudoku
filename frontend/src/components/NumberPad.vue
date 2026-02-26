@@ -120,7 +120,7 @@ const missingCounts = computed(() => {
                     @click="game.pencilMode ? placeNote(n) : placeNumber(n)"
                 >
                     <span class="numpad-value">{{ n }}</span>
-                    <span v-if="missingCounts[n] > 0" class="numpad-counter">{{ missingCounts[n] }}</span>
+                    <span v-if="missingCounts[n] && missingCounts[n] > 0" class="numpad-counter">{{ missingCounts[n] }}</span>
                 </button>
                 <button
                     class="numpad-btn numpad-erase"
