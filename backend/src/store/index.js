@@ -192,10 +192,6 @@ async function getLeaderboard(difficulty = null, limit = 50) {
 }
 
 async function getDailyLeaderboard(difficulty = null, limit = 50) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayTimestamp = today.getTime();
-
   let text;
   let params;
 
@@ -208,10 +204,10 @@ async function getDailyLeaderboard(difficulty = null, limit = 50) {
                    mistakes,
                    completed_at AS "completedAt"
             FROM leaderboard
-            WHERE difficulty = $1 AND completed_at >= $2
+            WHERE difficulty = $1 AND completed_at >= CURRENT_DATE
             ORDER BY time ASC
-            LIMIT $3`;
-    params = [difficulty, todayTimestamp, limit];
+            LIMIT $2`;
+    params = [difficulty, limit];
   } else {
     text = `SELECT game_id   AS "gameId",
                    user_id   AS "userId",
@@ -221,10 +217,10 @@ async function getDailyLeaderboard(difficulty = null, limit = 50) {
                    mistakes,
                    completed_at AS "completedAt"
             FROM leaderboard
-            WHERE completed_at >= $1
+            WHERE completed_at >= CURRENT_DATE
             ORDER BY time ASC
-            LIMIT $2`;
-    params = [todayTimestamp, limit];
+            LIMIT $1`;
+    params = [limit];
   }
 
   const { rows } = await db.query(text, params);
