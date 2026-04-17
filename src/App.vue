@@ -13,15 +13,15 @@ import NavBar from "@/components/NavBar.vue";
 
 <style scoped>
 .app-shell {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    background: var(--bg-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .app-main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 0 28px;
 }
 </style>

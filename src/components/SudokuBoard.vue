@@ -75,7 +75,7 @@ function handleKeyDown(e: KeyboardEvent) {
 </script>
 
 <template>
-    <div class="board" tabindex="0" @keydown="handleKeyDown">
+    <div class="board" tabindex="0" aria-label="Sudoku board" @keydown="handleKeyDown">
         <div v-for="row in rows" :key="row" class="board-row">
             <SudokuCell v-for="col in 9" :key="col" :row="row" :col="col - 1" />
         </div>
@@ -84,27 +84,39 @@ function handleKeyDown(e: KeyboardEvent) {
 
 <style scoped>
 .board {
-    display: inline-flex;
-    flex-direction: column;
-    border: 2px solid var(--text-muted);
-    border-radius: var(--radius-sm);
-    outline: none;
-    overflow: hidden;
-    user-select: none;
+  --board-size: min(82vw, 580px);
+  width: var(--board-size);
+  display: inline-flex;
+  flex-direction: column;
+  border: 2px solid var(--md-sys-color-outline);
+  border-radius: 18px;
+  outline: none;
+  overflow: hidden;
+  user-select: none;
+  background: var(--md-sys-color-surface-container-low);
+  box-shadow: var(--elev-2);
 }
 
 .board:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px var(--accent-glow);
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent),
+    var(--elev-2);
 }
 
 .board-row {
-    display: flex;
+  display: flex;
 }
 
-/* Thick borders for 3x3 boxes */
 .board-row:nth-child(3),
 .board-row:nth-child(6) {
-    border-bottom: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--md-sys-color-outline);
+}
+
+@media (max-width: 620px) {
+  .board {
+    --board-size: min(92vw, 460px);
+    border-radius: 14px;
+  }
 }
 </style>

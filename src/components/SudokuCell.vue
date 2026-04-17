@@ -95,108 +95,106 @@ function onClick() {
 
 <style scoped>
 .cell {
-    width: 46px;
-    height: 46px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--border);
-    background: var(--bg-primary);
-    cursor: pointer;
-    transition: background var(--transition);
-    position: relative;
+  width: calc(var(--board-size) / 9);
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-low);
+  cursor: pointer;
+  transition: background 130ms ease, box-shadow 130ms ease;
+  position: relative;
 }
 
 .cell:hover {
-    background: var(--bg-hover);
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-primary) 9%,
+    var(--md-sys-color-surface-container-low)
+  );
 }
 
 .cell--locked {
-    background: var(--bg-secondary);
+  background: var(--md-sys-color-surface-container-high);
 }
 
 .cell--locked .cell-value {
-    color: var(--text-primary);
-    font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  font-weight: 700;
 }
 
 .cell--highlighted {
-    background: var(--bg-tertiary);
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-secondary) 17%,
+    var(--md-sys-color-surface-container-low)
+  );
 }
 
 .cell--same-value {
-    background: rgba(108, 99, 255, 0.22);
-    box-shadow: inset 0 0 0 1px rgba(108, 99, 255, 0.4);
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-primary) 20%,
+    var(--md-sys-color-surface-container-low)
+  );
 }
 
 .cell--selected {
-    background: rgba(108, 99, 255, 0.28);
-    box-shadow: inset 0 0 0 2px var(--accent);
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-primary) 22%,
+    var(--md-sys-color-surface-container-low)
+  );
+  box-shadow: inset 0 0 0 2px var(--md-sys-color-primary);
 }
 
 .cell--thick-right {
-    border-right: 2px solid var(--text-muted);
+  border-right: 2px solid var(--md-sys-color-outline);
 }
 
 .cell--thick-bottom {
-    border-bottom: 2px solid var(--text-muted);
+  border-bottom: 2px solid var(--md-sys-color-outline);
 }
 
 .cell--completed {
-    opacity: 0.4;
+  opacity: 0.58;
 }
 
 .cell-value {
-    font-size: 1.15rem;
-    font-family: var(--font-mono);
-    color: var(--accent);
-    font-weight: 500;
-    line-height: 1;
+  font-size: clamp(0.92rem, 2.2vw, 1.25rem);
+  font-family: var(--font-mono);
+  color: var(--md-sys-color-primary);
+  font-weight: 700;
+  line-height: 1;
 }
 
 .cell--locked .cell-value {
-    color: var(--text-primary);
+  color: var(--md-sys-color-on-surface);
 }
 
-/* ── Pencil notes 3×3 mini-grid ──────────────────────────────────────── */
-
 .notes-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    width: 100%;
-    height: 100%;
-    padding: 1px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  width: 100%;
+  height: 100%;
+  padding: 1px;
 }
 
 .note {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.55rem;
-    font-family: var(--font-mono);
-    font-weight: 500;
-    color: transparent;
-    line-height: 1;
-    user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(0.38rem, 0.95vw, 0.58rem);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: transparent;
+  line-height: 1;
+  user-select: none;
 }
 
 .note--visible {
-    color: var(--text-muted);
-}
-
-@media (max-width: 500px) {
-    .cell {
-        width: 36px;
-        height: 36px;
-    }
-
-    .cell-value {
-        font-size: 0.95rem;
-    }
-
-    .note {
-        font-size: 0.45rem;
-    }
+  color: var(--md-sys-color-on-surface-variant);
 }
 </style>

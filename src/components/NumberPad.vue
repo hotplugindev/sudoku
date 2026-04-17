@@ -159,223 +159,208 @@ const missingCounts = computed(() => {
 
 <style scoped>
 .pad-container {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-/* ── Pencil toggle ───────────────────────────────────────────────────── */
-
 .pencil-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text-secondary);
-    font-size: 0.85rem;
-    font-family: var(--font-sans);
-    font-weight: 500;
-    cursor: pointer;
-    transition: all var(--transition);
-    user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.86rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 130ms ease, border-color 130ms ease, color 130ms ease;
+  user-select: none;
 }
 
 .pencil-toggle:hover:not(:disabled) {
-    background: var(--bg-hover);
-    border-color: var(--border-light);
+  background: var(--md-sys-color-surface-container-highest);
 }
 
 .pencil-toggle--active {
-    background: rgba(108, 99, 255, 0.12);
-    border-color: var(--accent);
-    color: var(--accent);
-}
-
-.pencil-toggle--active:hover:not(:disabled) {
-    background: rgba(108, 99, 255, 0.18);
+  background: var(--md-sys-color-primary-container);
+  border-color: color-mix(in srgb, var(--md-sys-color-primary) 50%, var(--md-sys-color-outline));
+  color: var(--md-sys-color-on-primary-container);
 }
 
 .pencil-toggle:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
+  opacity: 0.42;
+  cursor: not-allowed;
 }
 
 .pencil-icon {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 .pencil-label {
-    flex: 1;
-    text-align: left;
+  flex: 1;
+  text-align: left;
 }
 
 .pencil-hint {
-    font-size: 0.65rem;
-    font-family: var(--font-mono);
-    padding: 1px 6px;
-    border-radius: 3px;
-    background: var(--bg-primary);
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    letter-spacing: 0.02em;
+  min-width: 22px;
+  min-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.64rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
-/* ── Section labels ──────────────────────────────────────────────────── */
-
 .numpad-section {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .section-label {
-    font-size: 0.65rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--md-sys-color-on-surface-variant);
 }
 
-/* ── Number pad (shared) ─────────────────────────────────────────────── */
-
 .numpad {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 5px;
-    max-width: 260px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  width: min(100%, 300px);
 }
 
 .numpad-btn {
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text-primary);
-    font-size: 1.1rem;
-    font-family: var(--font-mono);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all var(--transition);
+  min-height: 52px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--radius-sm);
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.12rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 130ms ease, border-color 130ms ease, color 130ms ease,
+    transform 90ms ease;
 }
 
 .numpad-value {
-    display: block;
+  display: block;
 }
 
 .numpad-counter {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    width: 14px;
-    height: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--accent);
-    color: #fff;
-    font-size: 0.6rem;
-    font-weight: 600;
-    border-radius: 3px;
-    line-height: 1;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .numpad-btn:hover:not(:disabled) {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
+  background: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary-container);
 }
 
 .numpad-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
+  opacity: 0.38;
+  cursor: not-allowed;
 }
 
-/* When pencil mode is active, tint the main buttons */
 .numpad-btn--pencil {
-    border-color: rgba(108, 99, 255, 0.25);
-}
-
-.numpad-btn--pencil:hover:not(:disabled) {
-    background: rgba(108, 99, 255, 0.7);
+  background: color-mix(
+    in srgb,
+    var(--md-sys-color-secondary-container) 68%,
+    var(--md-sys-color-surface-container-high)
+  );
 }
 
 .numpad-erase {
-    color: var(--error);
-    font-size: 1rem;
+  color: var(--md-sys-color-error);
 }
 
 .numpad-erase:hover:not(:disabled) {
-    background: var(--error);
-    color: #fff;
-    border-color: var(--error);
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  border-color: color-mix(in srgb, var(--md-sys-color-error) 52%, var(--md-sys-color-outline));
 }
 
-/* ── Notes quick pad (smaller, dimmer) ───────────────────────────────── */
-
 .notes-section {
-    opacity: 0.85;
+  opacity: 0.9;
 }
 
 .numpad--notes {
-    gap: 4px;
+  gap: 6px;
 }
 
 .numpad-btn--note {
-    width: 48px;
-    height: 34px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    background: var(--bg-secondary);
-    border: 1px dashed var(--border);
-    color: var(--text-secondary);
+  min-height: 38px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px dashed var(--md-sys-color-outline);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 .numpad-btn--note:hover:not(:disabled) {
-    background: rgba(108, 99, 255, 0.5);
-    color: #fff;
-    border-style: solid;
-    border-color: var(--accent);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  border-style: solid;
+  border-color: var(--md-sys-color-secondary);
 }
 
 .numpad-erase--note {
-    color: var(--error);
-    font-size: 0.85rem;
+  color: var(--md-sys-color-error);
 }
 
 .numpad-erase--note:hover:not(:disabled) {
-    background: rgba(239, 83, 80, 0.6);
-    color: #fff;
-    border-color: var(--error);
-    border-style: solid;
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  border-color: var(--md-sys-color-error);
+  border-style: solid;
 }
 
-/* ── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 620px) {
+  .numpad {
+    width: 100%;
+  }
 
-@media (max-width: 500px) {
-    .numpad {
-        max-width: 100%;
-    }
+  .numpad-btn {
+    min-height: 48px;
+    font-size: 1rem;
+  }
 
-    .numpad-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 0.95rem;
-    }
-
-    .numpad-btn--note {
-        width: 40px;
-        height: 30px;
-        font-size: 0.75rem;
-    }
+  .numpad-btn--note {
+    min-height: 36px;
+    font-size: 0.78rem;
+  }
 }
 </style>
