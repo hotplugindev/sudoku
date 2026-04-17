@@ -90,7 +90,9 @@ const difficultyColors: Record<string, string> = {
         </section>
 
         <aside class="controls-stage card">
-          <NumberPad />
+          <div class="desktop-controls">
+            <NumberPad />
+          </div>
           <div class="game-actions" v-if="game.isPlaying">
             <button class="btn btn-secondary btn-sm" @click="game.togglePause()">
               {{ game.isPaused ? "Resume" : "Pause" }}
@@ -98,6 +100,29 @@ const difficultyColors: Record<string, string> = {
             <button class="btn btn-danger btn-sm" @click="abandon">Give Up</button>
           </div>
         </aside>
+      </div>
+
+      <div v-if="game.isPlaying" class="mobile-toolbar">
+        <button
+          class="mobile-toolbar__btn"
+          :class="{ 'mobile-toolbar__btn--active': game.pencilMode }"
+          @click="game.togglePencilMode()"
+        >
+          Notes
+        </button>
+        <button
+          class="mobile-toolbar__btn"
+          :class="{ 'mobile-toolbar__btn--active': game.greyOutCompleted }"
+          @click="game.toggleGreyOutCompleted()"
+        >
+          Grey
+        </button>
+        <button class="mobile-toolbar__btn" @click="game.togglePause()">
+          {{ game.isPaused ? "Resume" : "Pause" }}
+        </button>
+        <button class="mobile-toolbar__btn mobile-toolbar__btn--danger" @click="abandon">
+          Give Up
+        </button>
       </div>
     </section>
 
@@ -172,6 +197,7 @@ const difficultyColors: Record<string, string> = {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   padding: 12px;
+  min-width: 0;
 }
 
 .hud-chip {
@@ -209,6 +235,7 @@ const difficultyColors: Record<string, string> = {
   display: grid;
   place-items: center;
   padding: 10px;
+  min-width: 0;
 }
 
 .controls-stage {
@@ -324,37 +351,95 @@ const difficultyColors: Record<string, string> = {
 
 @media (max-width: 760px) {
   .game-page--playing {
-    padding-bottom: calc(332px + env(safe-area-inset-bottom));
+    padding-bottom: calc(174px + env(safe-area-inset-bottom));
   }
 
   .play-hud {
-    grid-template-columns: repeat(3, minmax(130px, 1fr));
-    overflow-x: auto;
-    padding: 10px;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+    padding: 8px;
   }
 
   .hud-chip {
-    scroll-snap-align: start;
+    border-radius: 10px;
+    padding: 8px 9px;
+  }
+
+  .hud-chip__label {
+    font-size: 0.62rem;
+    margin-bottom: 1px;
+  }
+
+  .hud-chip__value {
+    font-size: 0.84rem;
+    line-height: 1.25;
+  }
+
+  .play-layout {
+    gap: 10px;
+  }
+
+  .board-stage {
+    padding: 8px;
   }
 
   .controls-stage {
-    position: fixed;
-    z-index: 105;
-    left: 10px;
-    right: 10px;
-    bottom: calc(84px + env(safe-area-inset-bottom));
-    border-radius: 20px;
-    box-shadow: var(--elev-4);
-    background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 94%, transparent);
-    backdrop-filter: blur(12px);
-    padding: 10px;
+    display: none;
   }
 
   .completion-actions,
   .game-actions {
     grid-template-columns: 1fr;
+  }
+
+  .mobile-toolbar {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: calc(84px + env(safe-area-inset-bottom));
+    z-index: 106;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+    border-radius: 16px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    background: color-mix(
+      in srgb,
+      var(--md-sys-color-surface-container-high) 94%,
+      transparent
+    );
+    backdrop-filter: blur(12px);
+    box-shadow: var(--elev-3);
+  }
+
+  .mobile-toolbar__btn {
+    min-height: 38px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 10px;
+    background: var(--md-sys-color-surface-container-highest);
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+  }
+
+  .mobile-toolbar__btn--active {
+    border-color: var(--md-sys-color-primary);
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+  }
+
+  .mobile-toolbar__btn--danger {
+    border-color: color-mix(in srgb, var(--md-sys-color-error) 35%, var(--md-sys-color-outline-variant));
+    color: var(--md-sys-color-error);
+  }
+}
+
+@media (min-width: 761px) {
+  .mobile-toolbar {
+    display: none;
   }
 }
 </style>

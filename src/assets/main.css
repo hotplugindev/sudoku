@@ -32,20 +32,20 @@
   --md-sys-color-error-container: #f9dedc;
   --md-sys-color-on-error-container: #410e0b;
 
-  --md-sys-color-outline: #79747e;
-  --md-sys-color-outline-variant: #cac4d0;
+  --md-sys-color-outline: #8f8894;
+  --md-sys-color-outline-variant: #cbc3cf;
 
-  --md-sys-color-surface: #fffbfe;
-  --md-sys-color-surface-dim: #ded8e1;
-  --md-sys-color-surface-bright: #fffbfe;
-  --md-sys-color-surface-container-lowest: #ffffff;
-  --md-sys-color-surface-container-low: #f7f2fa;
-  --md-sys-color-surface-container: #f3edf7;
-  --md-sys-color-surface-container-high: #ece6f0;
-  --md-sys-color-surface-container-highest: #e6e0e9;
+  --md-sys-color-surface: #f2edf4;
+  --md-sys-color-surface-dim: #dfd8e2;
+  --md-sys-color-surface-bright: #fbf7fd;
+  --md-sys-color-surface-container-lowest: #f8f3fa;
+  --md-sys-color-surface-container-low: #f1ebf4;
+  --md-sys-color-surface-container: #ece6ef;
+  --md-sys-color-surface-container-high: #e6e0e9;
+  --md-sys-color-surface-container-highest: #dfd8e2;
 
-  --md-sys-color-on-surface: #1d1b20;
-  --md-sys-color-on-surface-variant: #49454f;
+  --md-sys-color-on-surface: #26232a;
+  --md-sys-color-on-surface-variant: #5a5460;
 
   --md-sys-color-inverse-surface: #322f35;
   --md-sys-color-inverse-on-surface: #f5eff7;
@@ -128,13 +128,13 @@ body {
   background:
     radial-gradient(
       1100px 520px at 16% -20%,
-      color-mix(in srgb, var(--md-sys-color-primary) 16%, transparent),
-      transparent 60%
+      color-mix(in srgb, var(--md-sys-color-primary) 10%, transparent),
+      transparent 66%
     ),
     radial-gradient(
       900px 500px at 105% -15%,
-      color-mix(in srgb, var(--md-sys-color-tertiary) 14%, transparent),
-      transparent 62%
+      color-mix(in srgb, var(--md-sys-color-tertiary) 8%, transparent),
+      transparent 70%
     ),
     var(--md-sys-color-surface);
   line-height: 1.5;

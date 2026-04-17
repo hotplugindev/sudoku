@@ -84,8 +84,11 @@ function handleKeyDown(e: KeyboardEvent) {
 
 <style scoped>
 .board {
-  --board-size: min(86vw, 640px);
-  width: var(--board-size);
+  --board-max-size: 640px;
+  --board-outer-size: min(100%, var(--board-max-size));
+  --board-size: calc(var(--board-outer-size) - 4px);
+  width: var(--board-outer-size);
+  max-width: 100%;
   display: inline-flex;
   flex-direction: column;
   border: 2px solid color-mix(in srgb, var(--md-sys-color-outline) 88%, transparent);
@@ -106,6 +109,7 @@ function handleKeyDown(e: KeyboardEvent) {
 
 .board-row {
   display: flex;
+  width: 100%;
 }
 
 .board-row:nth-child(3),
@@ -115,7 +119,7 @@ function handleKeyDown(e: KeyboardEvent) {
 
 @media (max-width: 620px) {
   .board {
-    --board-size: min(94vw, 520px);
+    --board-max-size: 520px;
     border-radius: 16px;
   }
 }

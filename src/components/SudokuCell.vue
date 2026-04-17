@@ -153,7 +153,8 @@ const alignPickerRight = computed(() => props.col >= 7);
 
 <style scoped>
 .cell {
-  width: calc(var(--board-size) / 9);
+  flex: 1 1 0;
+  min-width: 0;
   aspect-ratio: 1;
   display: flex;
   align-items: center;
