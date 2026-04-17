@@ -2,8 +2,10 @@
 import { onMounted, ref } from "vue";
 import type { Difficulty } from "@/lib/sudoku";
 import {
+  getGameHistory,
   getUserStats,
   queryLeaderboard,
+  type GameHistoryEntry,
   type LeaderboardMode,
   type LocalLeaderboardEntry,
   type UserStats,
@@ -12,6 +14,7 @@ import {
 const activeTab = ref<string>("all");
 const leaderboardMode = ref<LeaderboardMode>("global");
 const leaderboard = ref<LocalLeaderboardEntry[]>([]);
+const history = ref<GameHistoryEntry[]>([]);
 const myStats = ref<UserStats | null>(null);
 const loadingBoard = ref(false);
 
@@ -19,16 +22,31 @@ const difficulties = ["all", "easy", "medium", "hard", "expert"];
 const statDifficulties: Difficulty[] = ["easy", "medium", "hard", "expert"];
 
 const difficultyColors: Record<string, string> = {
-  easy: "#4caf50",
-  medium: "#ffa726",
-  hard: "#ef5350",
-  expert: "#ab47bc",
+  easy: "#34d399",
+  medium: "#f59e0b",
+  hard: "#f87171",
+  expert: "#c084fc",
 };
 
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+}
+
+function formatDate(ts: number): string {
+  return new Date(ts).toLocaleString([], {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function statusLabel(status: GameHistoryEntry["status"]): string {
+  if (status === "completed") return "Completed";
+  if (status === "abandoned") return "Abandoned";
+  return "In Progress";
 }
 
 function fetchLeaderboard(difficulty?: string) {
@@ -41,8 +59,9 @@ function fetchLeaderboard(difficulty?: string) {
   loadingBoard.value = false;
 }
 
-function fetchMyStats() {
+function fetchDashboardData() {
   myStats.value = getUserStats();
+  history.value = getGameHistory(60);
 }
 
 function switchTab(tab: string) {
@@ -57,29 +76,37 @@ function switchMode(mode: LeaderboardMode) {
 
 onMounted(() => {
   fetchLeaderboard();
-  fetchMyStats();
+  fetchDashboardData();
 });
 </script>
 
 <template>
   <div class="dashboard container">
-    <h2 class="page-title">Dashboard</h2>
+    <header class="hero card">
+      <div>
+        <h2 class="page-title">Your Dashboard</h2>
+        <p class="hero-sub">
+          Track your local progress, recent sessions, and best times.
+        </p>
+      </div>
+      <RouterLink class="btn btn-primary" to="/">Start New Puzzle</RouterLink>
+    </header>
 
     <section class="stats-section" v-if="myStats">
-      <h3 class="section-title">Progress</h3>
+      <h3 class="section-title">Overview</h3>
       <div class="stats-grid">
-        <div class="stat-card card">
+        <article class="stat-card card">
           <span class="stat-number">{{ myStats.totalCompleted }}</span>
-          <span class="stat-label">Completed</span>
-        </div>
-        <div class="stat-card card">
+          <span class="stat-label">Completed Games</span>
+        </article>
+        <article class="stat-card card">
           <span class="stat-number">{{ myStats.totalPlayed }}</span>
-          <span class="stat-label">Played</span>
-        </div>
+          <span class="stat-label">Games Played</span>
+        </article>
       </div>
 
       <div class="difficulty-stats">
-        <div
+        <article
           v-for="diff in statDifficulties"
           :key="diff"
           class="diff-stat card"
@@ -119,13 +146,53 @@ onMounted(() => {
               </span>
             </div>
           </div>
-        </div>
+        </article>
       </div>
+    </section>
+
+    <section class="history-section card">
+      <div class="history-header">
+        <h3 class="section-title section-title--compact">Past Games</h3>
+        <span class="history-count">{{ history.length }} saved</span>
+      </div>
+
+      <div v-if="history.length > 0" class="history-list">
+        <article v-for="entry in history" :key="entry.id" class="history-item">
+          <div class="history-main">
+            <span
+              class="difficulty-pill"
+              :style="{
+                color: difficultyColors[entry.difficulty],
+                borderColor: difficultyColors[entry.difficulty],
+              }"
+            >
+              {{ entry.difficulty }}
+            </span>
+            <span class="history-time mono">{{ formatTime(entry.elapsed) }}</span>
+          </div>
+          <div class="history-meta">
+            <span
+              class="status-pill"
+              :class="{
+                'status-pill--completed': entry.status === 'completed',
+                'status-pill--abandoned': entry.status === 'abandoned',
+                'status-pill--in-progress': entry.status === 'in_progress',
+              }"
+            >
+              {{ statusLabel(entry.status) }}
+            </span>
+            <span class="history-date">{{ formatDate(entry.startedAt) }}</span>
+          </div>
+        </article>
+      </div>
+      <p v-else class="empty-state">
+        No local games yet. Start a puzzle to build your history.
+      </p>
     </section>
 
     <section class="leaderboard-section card">
       <div class="leaderboard-header">
-        <h3 class="section-title section-title--no-gap">Best Times</h3>
+        <h3 class="section-title section-title--compact">Best Times</h3>
         <div class="mode-toggle">
           <button
             class="mode-btn"
@@ -185,7 +252,11 @@ onMounted(() => {
         </table>
 
         <p v-else class="empty-state">
-          {{ loadingBoard ? "Loading..." : "No entries yet. Start a puzzle to populate the board." }}
+          {{
+            loadingBoard
+              ? "Loading..."
+              : "No entries yet. Complete a puzzle to populate this board."
+          }}
         </p>
       </div>
     </section>
@@ -194,68 +265,77 @@ onMounted(() => {
 
 <style scoped>
 .dashboard {
-  padding-top: 12px;
-  padding-bottom: 20px;
+  padding-top: 10px;
+  padding-bottom: 26px;
+  display: grid;
+  gap: 14px;
+}
+
+.hero {
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
 }
 
 .page-title {
-  font-size: clamp(1.35rem, 3vw, 1.9rem);
-  font-weight: 700;
-  margin-bottom: 16px;
+  font-size: clamp(1.3rem, 3vw, 1.75rem);
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.hero-sub {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.92rem;
 }
 
 .section-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--md-sys-color-on-surface);
-  margin-bottom: 12px;
+  font-size: 1.02rem;
+  margin-bottom: 10px;
 }
 
-.section-title--no-gap {
+.section-title--compact {
   margin-bottom: 0;
-}
-
-.stats-section {
-  margin-bottom: 16px;
 }
 
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .stat-card {
   text-align: center;
-  padding: 22px 16px;
+  padding: 20px 14px;
 }
 
 .stat-number {
   display: block;
-  font-size: 2rem;
+  font-size: 1.9rem;
+  line-height: 1;
   font-weight: 700;
-  font-family: var(--font-mono);
   color: var(--md-sys-color-primary);
 }
 
 .stat-label {
   display: block;
-  margin-top: 2px;
-  font-size: 0.78rem;
-  letter-spacing: 0.07em;
+  margin-top: 6px;
+  font-size: 0.76rem;
   text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--md-sys-color-on-surface-variant);
 }
 
 .difficulty-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .diff-stat {
-  padding: 14px;
+  padding: 12px;
 }
 
 .diff-stat-header {
@@ -272,10 +352,8 @@ onMounted(() => {
 }
 
 .diff-stat-name {
-  font-size: 0.92rem;
-  font-weight: 600;
   text-transform: capitalize;
-  color: var(--md-sys-color-on-surface);
+  font-weight: 600;
 }
 
 .diff-stat-body {
@@ -287,7 +365,7 @@ onMounted(() => {
 .diff-stat-item {
   display: flex;
   justify-content: space-between;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
 }
 
 .diff-stat-label {
@@ -296,14 +374,87 @@ onMounted(() => {
 
 .diff-stat-value {
   font-weight: 700;
-  color: var(--md-sys-color-on-surface);
+}
+
+.history-section {
+  padding: 14px;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.history-count {
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.history-list {
+  display: grid;
+  gap: 8px;
+  max-height: 360px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.history-item {
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-low);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.history-main,
+.history-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-time {
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.history-date {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.78rem;
+}
+
+.status-pill {
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+}
+
+.status-pill--completed {
+  background: color-mix(in srgb, #34d399 20%, transparent);
+  color: #34d399;
+}
+
+.status-pill--abandoned {
+  background: color-mix(in srgb, #f87171 20%, transparent);
+  color: #f87171;
+}
+
+.status-pill--in-progress {
+  background: color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent);
+  color: var(--md-sys-color-primary);
 }
 
 .leaderboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   gap: 8px;
 }
 
@@ -312,21 +463,20 @@ onMounted(() => {
   gap: 4px;
   padding: 4px;
   border-radius: var(--radius-pill);
-  background: var(--md-sys-color-surface-container-high);
   border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-high);
 }
 
 .mode-btn {
+  min-height: 32px;
   border: none;
   border-radius: var(--radius-pill);
-  min-height: 34px;
   padding: 0 14px;
   background: transparent;
   color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 120ms ease, color 120ms ease;
 }
 
 .mode-btn--active {
@@ -338,31 +488,29 @@ onMounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .tab {
+  min-height: 32px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--md-sys-color-outline);
+  padding: 0 12px;
   background: var(--md-sys-color-surface-container-lowest);
   color: var(--md-sys-color-on-surface-variant);
-  min-height: 34px;
-  padding: 0 14px;
-  text-transform: capitalize;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 600;
+  text-transform: capitalize;
   cursor: pointer;
-  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
 }
 
 .tab--active {
-  background: var(--md-sys-color-secondary-container);
   border-color: var(--md-sys-color-secondary-container);
+  background: var(--md-sys-color-secondary-container);
   color: var(--md-sys-color-on-secondary-container);
 }
 
 .leaderboard-table-wrap {
-  background: var(--md-sys-color-surface-container-low);
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -371,25 +519,23 @@ onMounted(() => {
 .leaderboard-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.88rem;
 }
 
 .leaderboard-table th {
   text-align: left;
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  padding: 11px 14px;
   color: var(--md-sys-color-on-surface-variant);
-  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  padding: 10px 12px;
   background: var(--md-sys-color-surface-container-high);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
 }
 
 .leaderboard-table td {
-  padding: 11px 14px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--md-sys-color-outline-variant);
-  color: var(--md-sys-color-on-surface);
+  font-size: 0.86rem;
 }
 
 .leaderboard-table tr:last-child td {
@@ -405,42 +551,59 @@ onMounted(() => {
 .difficulty-pill {
   display: inline-flex;
   align-items: center;
-  min-height: 28px;
+  min-height: 26px;
   border-radius: var(--radius-pill);
   border: 1px solid;
-  padding: 0 10px;
-  font-size: 0.75rem;
+  padding: 0 9px;
+  font-size: 0.74rem;
   font-weight: 600;
   text-transform: capitalize;
 }
 
 .empty-state {
-  padding: 36px 16px;
+  padding: 24px 12px;
   text-align: center;
   color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 980px) {
   .difficulty-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 620px) {
+@media (max-width: 720px) {
+  .hero {
+    padding: 14px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hero .btn {
+    width: 100%;
+  }
+
   .stats-grid,
   .difficulty-stats {
     grid-template-columns: 1fr;
   }
 
+  .history-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .history-main,
+  .history-meta {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .leaderboard-header {
     flex-direction: column;
     align-items: flex-start;
-  }
-
-  .leaderboard-table th,
-  .leaderboard-table td {
-    padding: 10px 11px;
   }
 }
 </style>

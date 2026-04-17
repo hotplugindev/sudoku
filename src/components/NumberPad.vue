@@ -161,20 +161,20 @@ const missingCounts = computed(() => {
 .pad-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .pencil-toggle {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 44px;
+  min-height: 42px;
   padding: 0 12px;
-  border-radius: var(--radius-pill);
+  border-radius: 12px;
   border: 1px solid var(--md-sys-color-outline);
   background: var(--md-sys-color-surface-container-high);
   color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   font-weight: 500;
   cursor: pointer;
   transition: background 130ms ease, border-color 130ms ease, color 130ms ease;
@@ -187,7 +187,11 @@ const missingCounts = computed(() => {
 
 .pencil-toggle--active {
   background: var(--md-sys-color-primary-container);
-  border-color: color-mix(in srgb, var(--md-sys-color-primary) 50%, var(--md-sys-color-outline));
+  border-color: color-mix(
+    in srgb,
+    var(--md-sys-color-primary) 50%,
+    var(--md-sys-color-outline)
+  );
   color: var(--md-sys-color-on-primary-container);
 }
 
@@ -230,7 +234,7 @@ const missingCounts = computed(() => {
 }
 
 .section-label {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -240,14 +244,14 @@ const missingCounts = computed(() => {
 .numpad {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 6px;
-  width: min(100%, 300px);
+  gap: 7px;
+  width: 100%;
 }
 
 .numpad-btn {
-  min-height: 52px;
+  min-height: 50px;
   border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--radius-sm);
+  border-radius: 12px;
   background: var(--md-sys-color-surface-container-high);
   color: var(--md-sys-color-on-surface);
   position: relative;
@@ -310,7 +314,11 @@ const missingCounts = computed(() => {
 .numpad-erase:hover:not(:disabled) {
   background: var(--md-sys-color-error-container);
   color: var(--md-sys-color-on-error-container);
-  border-color: color-mix(in srgb, var(--md-sys-color-error) 52%, var(--md-sys-color-outline));
+  border-color: color-mix(
+    in srgb,
+    var(--md-sys-color-error) 52%,
+    var(--md-sys-color-outline)
+  );
 }
 
 .notes-section {
@@ -349,18 +357,42 @@ const missingCounts = computed(() => {
 }
 
 @media (max-width: 620px) {
+  .pad-container {
+    gap: 8px;
+  }
+
+  .pencil-toggle {
+    min-height: 38px;
+    font-size: 0.8rem;
+    border-radius: 10px;
+  }
+
+  .pencil-hint {
+    display: none;
+  }
+
+  .section-label {
+    font-size: 0.64rem;
+  }
+
   .numpad {
-    width: 100%;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
   }
 
   .numpad-btn {
-    min-height: 48px;
+    min-height: 44px;
     font-size: 1rem;
+    border-radius: 10px;
   }
 
   .numpad-btn--note {
-    min-height: 36px;
-    font-size: 0.78rem;
+    min-height: 34px;
+    font-size: 0.75rem;
+  }
+
+  .notes-section {
+    display: none;
   }
 }
 </style>

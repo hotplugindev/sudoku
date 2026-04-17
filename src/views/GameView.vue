@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useRouter } from "vue-router";
 import { useGameStore } from "@/stores/game";
 import SudokuBoard from "@/components/SudokuBoard.vue";
@@ -10,101 +10,96 @@ const game = useGameStore();
 const router = useRouter();
 const loading = ref(false);
 
+const isPlayingView = computed(() => game.status !== "idle");
+
 async function startGame(difficulty: string) {
-    loading.value = true;
-    try {
-        await game.newGame(difficulty as "easy" | "medium" | "hard" | "expert");
-    } catch (err) {
-        console.error("Failed to start game:", err);
-    } finally {
-        loading.value = false;
-    }
+  loading.value = true;
+  try {
+    await game.newGame(difficulty as "easy" | "medium" | "hard" | "expert");
+  } catch (err) {
+    console.error("Failed to start game:", err);
+  } finally {
+    loading.value = false;
+  }
 }
 
 async function abandon() {
-    if (!confirm("Are you sure you want to give up?")) return;
-    await game.abandonGame();
+  if (!confirm("Are you sure you want to give up?")) return;
+  await game.abandonGame();
 }
 
 function newGameFromFinish() {
-    game.reset();
+  game.reset();
 }
 
 function goToDashboard() {
-    router.push("/dashboard");
+  router.push("/dashboard");
 }
 
 const difficultyColors: Record<string, string> = {
-    easy: "#4caf50",
-    medium: "#ffa726",
-    hard: "#ef5350",
-    expert: "#ab47bc",
+  easy: "#34d399",
+  medium: "#f59e0b",
+  hard: "#f87171",
+  expert: "#c084fc",
 };
 </script>
 
 <template>
-  <div class="game-page container">
-    <!-- Difficulty selection screen -->
-    <div v-if="game.status === 'idle'" class="game-start card">
+  <div class="game-page container" :class="{ 'game-page--playing': isPlayingView }">
+    <section v-if="game.status === 'idle'" class="new-game card">
       <h2 class="page-title">New Game</h2>
-      <p class="page-subtitle">Choose your difficulty</p>
+      <p class="page-subtitle">Choose your challenge and begin.</p>
       <DifficultySelector :loading="loading" @select="startGame" />
-    </div>
+    </section>
 
-    <!-- Active game -->
-    <div v-else class="game-active">
-      <div class="game-info card">
-        <div class="info-item">
-          <span class="info-label">Difficulty</span>
+    <section v-else class="play-shell">
+      <header class="play-hud card">
+        <div class="hud-chip">
+          <span class="hud-chip__label">Difficulty</span>
           <span
-            class="info-value difficulty-badge"
+            class="hud-chip__value"
             :style="{ color: difficultyColors[game.difficulty] }"
           >
             {{ game.difficulty }}
           </span>
         </div>
-        <div class="info-item">
-          <span class="info-label">Mode</span>
-          <span
-            class="info-value mode-badge"
-            :class="{ 'mode-badge--pencil': game.pencilMode }"
-          >
+        <div class="hud-chip">
+          <span class="hud-chip__label">Mode</span>
+          <span class="hud-chip__value">
             {{ game.pencilMode ? "Notes" : "Normal" }}
           </span>
         </div>
-        <div class="info-item">
-          <span class="info-label">Time</span>
-          <span class="info-value mono">{{ game.formattedTime }}</span>
+        <div class="hud-chip">
+          <span class="hud-chip__label">Time</span>
+          <span class="hud-chip__value mono">{{ game.formattedTime }}</span>
         </div>
-      </div>
+      </header>
 
-      <div class="game-layout">
-        <div class="board-container card">
+      <div class="play-layout">
+        <section class="board-stage card">
           <SudokuBoard />
-
           <Transition name="fade">
             <div v-if="game.isPaused" class="pause-overlay" @click="game.resumeGame()">
               <div class="pause-content">
                 <div class="pause-icon">⏸</div>
-                <h3>Game Paused</h3>
-                <p>Tap to resume</p>
+                <h3>Paused</h3>
+                <p>Tap to continue</p>
               </div>
             </div>
           </Transition>
-        </div>
+        </section>
 
-        <div class="game-sidebar card">
+        <aside class="controls-stage card">
           <NumberPad />
-
           <div class="game-actions" v-if="game.isPlaying">
             <button class="btn btn-secondary btn-sm" @click="game.togglePause()">
               {{ game.isPaused ? "Resume" : "Pause" }}
             </button>
             <button class="btn btn-danger btn-sm" @click="abandon">Give Up</button>
           </div>
-        </div>
+        </aside>
       </div>
-    </div>
+    </section>
 
     <Transition name="fade">
       <div v-if="game.isFinished" class="completion-overlay">
@@ -112,27 +107,17 @@ const difficultyColors: Record<string, string> = {
           <template v-if="game.status === 'completed'">
             <div class="result-icon result-win">&#10003;</div>
             <h2>Puzzle Solved</h2>
-            <div class="result-stats">
-              <div class="result-stat">
-                <span class="result-stat-label">Difficulty</span>
-                <span
-                  class="result-stat-value difficulty-badge"
-                  :style="{ color: difficultyColors[game.difficulty] }"
-                >
-                  {{ game.difficulty }}
-                </span>
-              </div>
-              <div class="result-stat">
-                <span class="result-stat-label">Time</span>
-                <span class="result-stat-value mono">{{ game.formattedTime }}</span>
-              </div>
-            </div>
+            <p class="result-sub">
+              Great run in <span class="mono">{{ game.formattedTime }}</span> on
+              <span class="difficulty-inline" :style="{ color: difficultyColors[game.difficulty] }">
+                {{ game.difficulty }}
+              </span>.
+            </p>
           </template>
-
           <template v-else>
             <div class="result-icon result-lose">&#10007;</div>
             <h2>Game Abandoned</h2>
-            <p class="result-sub">The full solution has been revealed on the board.</p>
+            <p class="result-sub">The complete solution is visible on the board.</p>
           </template>
 
           <div class="completion-actions">
@@ -140,7 +125,7 @@ const difficultyColors: Record<string, string> = {
               New Puzzle
             </button>
             <button class="btn btn-primary" @click="goToDashboard">
-              View Dashboard
+              Open Dashboard
             </button>
           </div>
         </div>
@@ -151,129 +136,86 @@ const difficultyColors: Record<string, string> = {
 
 <style scoped>
 .game-page {
-  padding-top: 12px;
-  padding-bottom: 24px;
+  padding-top: 8px;
+  padding-bottom: 20px;
 }
 
-.game-start {
-  max-width: 720px;
-  margin: 24px auto 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
+.game-page--playing {
+  padding-bottom: 30px;
+}
+
+.new-game {
+  width: min(100%, 760px);
+  margin: 14px auto 0;
   text-align: center;
+  display: grid;
+  gap: 10px;
+  padding: 24px;
 }
 
 .page-title {
-  font-size: clamp(1.4rem, 3vw, 1.9rem);
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  font-size: clamp(1.4rem, 2.6vw, 2rem);
+  line-height: 1.1;
 }
 
 .page-subtitle {
   color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.95rem;
-  margin-bottom: 4px;
 }
 
-.game-info {
+.play-shell {
+  display: grid;
+  gap: 12px;
+}
+
+.play-hud {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 10px;
+  padding: 12px;
 }
 
-.info-item {
-  padding: 12px 14px;
-  border-radius: var(--radius-sm);
-  background: var(--md-sys-color-surface-container-high);
+.hud-chip {
   border: 1px solid var(--md-sys-color-outline-variant);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  background: var(--md-sys-color-surface-container-high);
+  border-radius: 12px;
+  padding: 10px 12px;
 }
 
-.info-label {
-  font-size: 0.72rem;
-  color: var(--md-sys-color-on-surface-variant);
-  text-transform: uppercase;
+.hud-chip__label {
+  display: block;
+  font-size: 0.7rem;
   letter-spacing: 0.08em;
-  font-weight: 600;
-}
-
-.info-value {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--md-sys-color-on-surface);
-}
-
-.difficulty-badge {
-  text-transform: capitalize;
-}
-
-.mode-badge {
-  text-transform: capitalize;
+  text-transform: uppercase;
   color: var(--md-sys-color-on-surface-variant);
+  margin-bottom: 2px;
+  font-weight: 600;
 }
 
-.mode-badge--pencil {
-  color: var(--md-sys-color-primary);
+.hud-chip__value {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: capitalize;
 }
 
-.game-layout {
+.play-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 320px;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) 336px;
+  gap: 12px;
   align-items: start;
 }
 
-.board-container {
+.board-stage {
   position: relative;
   display: grid;
   place-items: center;
-  padding: 14px;
+  padding: 10px;
 }
 
-.pause-overlay {
-  position: absolute;
-  inset: 14px;
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--md-sys-color-inverse-surface) 74%, transparent);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 10;
-}
-
-.pause-content {
-  text-align: center;
-  color: var(--md-sys-color-inverse-on-surface);
-}
-
-.pause-icon {
-  font-size: 2.8rem;
-  margin-bottom: 6px;
-}
-
-.pause-overlay h3 {
-  font-size: 1.2rem;
-  margin-bottom: 2px;
-}
-
-.pause-overlay p {
-  font-size: 0.88rem;
-  opacity: 0.84;
-}
-
-.game-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+.controls-stage {
+  display: grid;
+  gap: 12px;
   position: sticky;
-  top: 96px;
+  top: 84px;
 }
 
 .game-actions {
@@ -282,44 +224,60 @@ const difficultyColors: Record<string, string> = {
   gap: 8px;
 }
 
+.pause-overlay {
+  position: absolute;
+  inset: 10px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--md-sys-color-inverse-surface) 78%, transparent);
+  backdrop-filter: blur(5px);
+  z-index: 12;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.pause-content {
+  text-align: center;
+  color: var(--md-sys-color-inverse-on-surface);
+}
+
+.pause-icon {
+  font-size: 2.4rem;
+  margin-bottom: 4px;
+}
+
+.pause-content h3 {
+  font-size: 1.2rem;
+}
+
+.pause-content p {
+  font-size: 0.86rem;
+  opacity: 0.82;
+}
+
 .completion-overlay {
   position: fixed;
   inset: 0;
-  padding: 20px;
-  background: color-mix(in srgb, var(--md-sys-color-inverse-surface) 58%, transparent);
+  z-index: 120;
+  padding: 18px;
+  background: color-mix(in srgb, var(--md-sys-color-inverse-surface) 62%, transparent);
+  display: grid;
+  place-items: center;
   backdrop-filter: blur(6px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
 }
 
 .completion-modal {
+  width: min(100%, 460px);
   text-align: center;
-  width: 100%;
-  max-width: 480px;
-  padding: 30px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  align-items: center;
-  animation: slide-up 220ms ease-out;
-}
-
-@keyframes slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  display: grid;
+  gap: 14px;
+  padding: 24px;
 }
 
 .result-icon {
   width: 72px;
   height: 72px;
+  margin: 0 auto;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
@@ -338,82 +296,65 @@ const difficultyColors: Record<string, string> = {
   background: var(--md-sys-color-error-container);
 }
 
-.completion-modal h2 {
-  font-size: 1.55rem;
-  line-height: 1.2;
-}
-
 .result-sub {
   color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.93rem;
+  font-size: 0.9rem;
 }
 
-.result-stats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  width: 100%;
-  max-width: 340px;
-}
-
-.result-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-}
-
-.result-stat-label {
-  font-size: 0.7rem;
-  color: var(--md-sys-color-on-surface-variant);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+.difficulty-inline {
+  text-transform: capitalize;
   font-weight: 600;
 }
 
-.result-stat-value {
-  font-size: 1.15rem;
-  font-weight: 700;
-}
-
 .completion-actions {
-  margin-top: 8px;
-  width: 100%;
   display: grid;
+  gap: 8px;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.completion-actions .btn {
-  width: 100%;
 }
 
 @media (max-width: 1080px) {
-  .game-layout {
+  .play-layout {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .game-sidebar {
+  .controls-stage {
     position: static;
   }
 }
 
-@media (max-width: 720px) {
-  .game-info {
-    grid-template-columns: 1fr;
+@media (max-width: 760px) {
+  .game-page--playing {
+    padding-bottom: calc(332px + env(safe-area-inset-bottom));
   }
 
-  .game-actions,
-  .completion-actions {
-    grid-template-columns: 1fr;
+  .play-hud {
+    grid-template-columns: repeat(3, minmax(130px, 1fr));
+    overflow-x: auto;
+    padding: 10px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
   }
 
-  .board-container {
+  .hud-chip {
+    scroll-snap-align: start;
+  }
+
+  .controls-stage {
+    position: fixed;
+    z-index: 105;
+    left: 10px;
+    right: 10px;
+    bottom: calc(84px + env(safe-area-inset-bottom));
+    border-radius: 20px;
+    box-shadow: var(--elev-4);
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 94%, transparent);
+    backdrop-filter: blur(12px);
     padding: 10px;
   }
 
-  .pause-overlay {
-    inset: 10px;
+  .completion-actions,
+  .game-actions {
+    grid-template-columns: 1fr;
   }
 }
 </style>

@@ -1,12 +1,18 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { getActiveTheme, setTheme, type ThemeMode } from "@/lib/theme";
 
 const theme = ref<ThemeMode>("light");
 
-function selectTheme(mode: ThemeMode) {
-  theme.value = mode;
-  setTheme(mode);
+const themeGlyph = computed(() => (theme.value === "dark" ? "☾" : "☀"));
+const themeLabel = computed(() =>
+  theme.value === "dark" ? "Switch to light mode" : "Switch to dark mode",
+);
+
+function toggleTheme() {
+  const next: ThemeMode = theme.value === "dark" ? "light" : "dark";
+  theme.value = next;
+  setTheme(next);
 }
 
 onMounted(() => {
@@ -15,181 +21,179 @@ onMounted(() => {
 </script>
 
 <template>
-  <nav class="top-app-bar">
-    <div class="top-app-bar__inner container">
+  <header class="app-header">
+    <div class="app-header__bar container">
       <RouterLink to="/" class="brand">
         <span class="brand__glyph">◧</span>
         <span class="brand__text">Sudoku</span>
       </RouterLink>
 
-      <div class="controls">
-        <div class="nav-pills" aria-label="Primary navigation">
-          <RouterLink to="/" class="nav-pill">Play</RouterLink>
-          <RouterLink to="/dashboard" class="nav-pill">Dashboard</RouterLink>
-        </div>
-
-        <div class="theme-toggle" role="group" aria-label="Theme">
-          <button
-            class="theme-toggle__btn"
-            :class="{ 'theme-toggle__btn--active': theme === 'light' }"
-            @click="selectTheme('light')"
-            aria-label="Light theme"
-          >
-            Light
-          </button>
-          <button
-            class="theme-toggle__btn"
-            :class="{ 'theme-toggle__btn--active': theme === 'dark' }"
-            @click="selectTheme('dark')"
-            aria-label="Dark theme"
-          >
-            Dark
-          </button>
-        </div>
-      </div>
+      <button
+        class="theme-btn"
+        type="button"
+        :aria-label="themeLabel"
+        @click="toggleTheme"
+      >
+        <span class="theme-btn__glyph">{{ themeGlyph }}</span>
+      </button>
     </div>
+
+    <div class="desktop-nav container">
+      <RouterLink to="/" class="desktop-nav__item">Play</RouterLink>
+      <RouterLink to="/dashboard" class="desktop-nav__item">
+        Dashboard
+      </RouterLink>
+    </div>
+  </header>
+
+  <nav class="mobile-nav">
+    <RouterLink to="/" class="mobile-nav__item">
+      <span class="mobile-nav__icon">⌂</span>
+      <span class="mobile-nav__label">Play</span>
+    </RouterLink>
+    <RouterLink to="/dashboard" class="mobile-nav__item">
+      <span class="mobile-nav__icon">≡</span>
+      <span class="mobile-nav__label">Dashboard</span>
+    </RouterLink>
   </nav>
 </template>
 
 <style scoped>
-.top-app-bar {
+.app-header {
   position: sticky;
   top: 0;
   z-index: 100;
   backdrop-filter: blur(12px);
-  background: color-mix(in srgb, var(--md-sys-color-surface) 84%, transparent);
   border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  background: color-mix(in srgb, var(--md-sys-color-surface) 86%, transparent);
 }
 
-.top-app-bar__inner {
-  min-height: 72px;
+.app-header__bar {
+  min-height: 62px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
 }
 
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 9px;
   color: var(--md-sys-color-on-surface);
   text-decoration: none;
-  font-size: 1.15rem;
+  font-size: 1.08rem;
   font-weight: 700;
 }
 
 .brand__glyph {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 12px;
   color: var(--md-sys-color-on-primary-container);
   background: var(--md-sys-color-primary-container);
 }
 
-.controls {
+.theme-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.02rem;
+}
+
+.desktop-nav {
+  min-height: 52px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
-.nav-pills {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px;
-  border-radius: var(--radius-pill);
-  background: var(--md-sys-color-surface-container-high);
-  border: 1px solid var(--md-sys-color-outline-variant);
-}
-
-.nav-pill {
+.desktop-nav__item {
   min-height: 36px;
   padding: 0 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-pill);
   color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.88rem;
-  font-weight: 500;
-  text-decoration: none;
-  transition: background 120ms ease, color 120ms ease;
-}
-
-.nav-pill:hover {
-  text-decoration: none;
-  background: color-mix(
-    in srgb,
-    var(--md-sys-color-primary) 12%,
-    var(--md-sys-color-surface-container-high)
-  );
-}
-
-.nav-pill.router-link-active {
-  color: var(--md-sys-color-on-secondary-container);
-  background: var(--md-sys-color-secondary-container);
-}
-
-.theme-toggle {
-  display: inline-flex;
-  background: var(--md-sys-color-surface-container-high);
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--radius-pill);
-  padding: 3px;
-}
-
-.theme-toggle__btn {
-  border: none;
-  background: transparent;
-  color: var(--md-sys-color-on-surface-variant);
-  border-radius: var(--radius-pill);
-  min-height: 34px;
-  padding: 0 14px;
-  font-family: inherit;
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: background 140ms ease, color 140ms ease;
+  text-decoration: none;
 }
 
-.theme-toggle__btn--active {
+.desktop-nav__item.router-link-active {
+  border-color: var(--md-sys-color-primary-container);
   background: var(--md-sys-color-primary-container);
   color: var(--md-sys-color-on-primary-container);
 }
 
-@media (max-width: 860px) {
-  .top-app-bar__inner {
-    min-height: 112px;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .brand {
-    justify-content: center;
-  }
-
-  .controls {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
+.mobile-nav {
+  display: none;
 }
 
-@media (max-width: 480px) {
-  .nav-pill {
-    min-height: 34px;
-    padding: 0 12px;
-    font-size: 0.82rem;
+@media (max-width: 760px) {
+  .desktop-nav {
+    display: none;
   }
 
-  .theme-toggle__btn {
-    min-height: 32px;
-    padding: 0 12px;
+  .app-header {
+    border-bottom: none;
+  }
+
+  .mobile-nav {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    z-index: 110;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    border-radius: 20px;
+    padding: 8px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    background: color-mix(in srgb, var(--md-sys-color-surface-container-high) 92%, transparent);
+    backdrop-filter: blur(12px);
+    box-shadow: var(--elev-4);
+  }
+
+  .mobile-nav__item {
+    min-height: 46px;
+    border-radius: 14px;
+    color: var(--md-sys-color-on-surface-variant);
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    text-decoration: none;
+  }
+
+  .mobile-nav__icon {
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .mobile-nav__label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+  }
+
+  .mobile-nav__item.router-link-active {
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
   }
 }
 </style>

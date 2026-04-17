@@ -84,17 +84,17 @@ function handleKeyDown(e: KeyboardEvent) {
 
 <style scoped>
 .board {
-  --board-size: min(82vw, 580px);
+  --board-size: min(86vw, 640px);
   width: var(--board-size);
   display: inline-flex;
   flex-direction: column;
-  border: 2px solid var(--md-sys-color-outline);
-  border-radius: 18px;
+  border: 2px solid color-mix(in srgb, var(--md-sys-color-outline) 88%, transparent);
+  border-radius: 20px;
   outline: none;
   overflow: hidden;
   user-select: none;
   background: var(--md-sys-color-surface-container-low);
-  box-shadow: var(--elev-2);
+  box-shadow: var(--elev-3);
 }
 
 .board:focus {
@@ -115,8 +115,8 @@ function handleKeyDown(e: KeyboardEvent) {
 
 @media (max-width: 620px) {
   .board {
-    --board-size: min(92vw, 460px);
-    border-radius: 14px;
+    --board-size: min(94vw, 520px);
+    border-radius: 16px;
   }
 }
 </style>

@@ -31,6 +31,15 @@ export interface UserStats {
   byDifficulty: Record<Difficulty, DifficultyStats>;
 }
 
+export interface GameHistoryEntry {
+  id: string;
+  difficulty: Difficulty;
+  status: GameStatus;
+  elapsed: number;
+  startedAt: number;
+  completedAt: number | null;
+}
+
 const STORAGE_KEYS = {
   gameRecords: "sudoku.gameRecords",
   leaderboard: "sudoku.leaderboard",
@@ -144,7 +153,7 @@ export function getUserStats(): UserStats {
       const total = times.reduce((sum, time) => sum + time, 0);
 
       acc[difficulty] = {
-        played: completedForDifficulty.length,
+        played: records.filter((record) => record.difficulty === difficulty).length,
         bestTime: times.length > 0 ? Math.min(...times) : null,
         avgTime: times.length > 0 ? Math.round(total / times.length) : null,
       };
@@ -164,4 +173,21 @@ export function getUserStats(): UserStats {
     totalCompleted: completed.length,
     byDifficulty,
   };
+}
+
+export function getGameHistory(limit = 40): GameHistoryEntry[] {
+  const records = getGameRecords();
+
+  return records
+    .slice()
+    .sort((a, b) => b.startedAt - a.startedAt)
+    .slice(0, limit)
+    .map((record) => ({
+      id: record.id,
+      difficulty: record.difficulty,
+      status: record.status,
+      elapsed: record.elapsed,
+      startedAt: record.startedAt,
+      completedAt: record.completedAt,
+    }));
 }

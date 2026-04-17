@@ -22,6 +22,12 @@ import NavBar from "@/components/NavBar.vue";
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 18px 0 28px;
+  padding: 14px 0 26px;
+}
+
+@media (max-width: 760px) {
+  .app-main {
+    padding-bottom: calc(102px + env(safe-area-inset-bottom));
+  }
 }
 </style>

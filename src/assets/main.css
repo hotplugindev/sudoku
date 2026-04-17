@@ -138,6 +138,7 @@ body {
     ),
     var(--md-sys-color-surface);
   line-height: 1.5;
+  overflow-x: hidden;
 }
 
 #app {
@@ -155,7 +156,7 @@ a:hover {
 
 .container {
   width: 100%;
-  max-width: 1180px;
+  max-width: 1240px;
   margin: 0 auto;
   padding: 0 16px;
 }
@@ -164,7 +165,7 @@ a:hover {
   background: var(--md-sys-color-surface-container-low);
   border: 1px solid var(--md-sys-color-outline-variant);
   border-radius: var(--radius-lg);
-  box-shadow: var(--elev-1);
+  box-shadow: var(--elev-2);
   padding: 20px;
 }
 
@@ -290,6 +291,6 @@ a:hover {
 
   .card {
     border-radius: var(--radius-md);
-    padding: 16px;
+    padding: 14px;
   }
 }
