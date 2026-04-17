@@ -1,92 +1,63 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import api from "@/api";
-
-interface LeaderboardEntry {
-    gameId: string;
-    userId: string;
-    username: string;
-    difficulty: string;
-    time: number;
-    completedAt: string;
-}
-
-interface DifficultyStats {
-    played: number;
-    bestTime: number | null;
-    avgTime: number | null;
-}
-
-interface UserStats {
-    username: string;
-    totalPlayed: number;
-    totalCompleted: number;
-    byDifficulty: Record<string, DifficultyStats>;
-}
+import { onMounted, ref } from "vue";
+import type { Difficulty } from "@/lib/sudoku";
+import {
+  getUserStats,
+  queryLeaderboard,
+  type LeaderboardMode,
+  type LocalLeaderboardEntry,
+  type UserStats,
+} from "@/lib/localDb";
 
 const activeTab = ref<string>("all");
-const leaderboardMode = ref<"global" | "daily">("global");
-const leaderboard = ref<LeaderboardEntry[]>([]);
+const leaderboardMode = ref<LeaderboardMode>("global");
+const leaderboard = ref<LocalLeaderboardEntry[]>([]);
 const myStats = ref<UserStats | null>(null);
 const loadingBoard = ref(false);
-const loadingStats = ref(false);
 
 const difficulties = ["all", "easy", "medium", "hard", "expert"];
+const statDifficulties: Difficulty[] = ["easy", "medium", "hard", "expert"];
 
 const difficultyColors: Record<string, string> = {
-    easy: "#4caf50",
-    medium: "#ffa726",
-    hard: "#ef5350",
-    expert: "#ab47bc",
+  easy: "#4caf50",
+  medium: "#ffa726",
+  hard: "#ef5350",
+  expert: "#ab47bc",
 };
 
 function formatTime(seconds: number): string {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
 
-async function fetchLeaderboard(difficulty?: string) {
-    loadingBoard.value = true;
-    try {
-        const params: Record<string, string> = { mode: leaderboardMode.value };
-        if (difficulty && difficulty !== "all") {
-            params.difficulty = difficulty;
-        }
-        const { data } = await api.get("/leaderboard", { params });
-        leaderboard.value = data.entries;
-    } catch (err) {
-        console.error("Failed to load leaderboard:", err);
-    } finally {
-        loadingBoard.value = false;
-    }
+function fetchLeaderboard(difficulty?: string) {
+  loadingBoard.value = true;
+  leaderboard.value = queryLeaderboard({
+    mode: leaderboardMode.value,
+    difficulty,
+    limit: 50,
+  });
+  loadingBoard.value = false;
 }
 
-async function fetchMyStats() {
-    loadingStats.value = true;
-    try {
-        const { data } = await api.get("/leaderboard/me");
-        myStats.value = data;
-    } catch (err) {
-        console.error("Failed to load stats:", err);
-    } finally {
-        loadingStats.value = false;
-    }
+function fetchMyStats() {
+  myStats.value = getUserStats();
 }
 
 function switchTab(tab: string) {
-    activeTab.value = tab;
-    fetchLeaderboard(tab);
+  activeTab.value = tab;
+  fetchLeaderboard(tab);
 }
 
-function switchMode(mode: "global" | "daily") {
-    leaderboardMode.value = mode;
-    fetchLeaderboard(activeTab.value);
+function switchMode(mode: LeaderboardMode) {
+  leaderboardMode.value = mode;
+  fetchLeaderboard(activeTab.value);
 }
 
 onMounted(() => {
-    fetchLeaderboard();
-    fetchMyStats();
+  fetchLeaderboard();
+  fetchMyStats();
 });
 </script>
 
@@ -112,7 +83,7 @@ onMounted(() => {
 
             <div class="difficulty-stats">
                 <div
-                    v-for="diff in ['easy', 'medium', 'hard', 'expert']"
+                    v-for="diff in statDifficulties"
                     :key="diff"
                     class="diff-stat card"
                 >
@@ -200,7 +171,6 @@ onMounted(() => {
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Player</th>
                             <th>Difficulty</th>
                             <th>Time</th>
                         </tr>
@@ -211,7 +181,6 @@ onMounted(() => {
                             :key="entry.gameId"
                         >
                             <td class="rank">{{ i + 1 }}</td>
-                            <td class="player">{{ entry.username }}</td>
                             <td>
                                 <span
                                     class="difficulty-pill"
@@ -466,10 +435,6 @@ onMounted(() => {
     font-weight: 700;
     color: var(--text-muted);
     width: 40px;
-}
-
-.player {
-    font-weight: 600;
 }
 
 .difficulty-pill {

@@ -1,14 +1,4 @@
 <script setup lang="ts">
-import { useAuthStore } from "@/stores/auth";
-import { useRouter } from "vue-router";
-
-const auth = useAuthStore();
-const router = useRouter();
-
-function logout() {
-  auth.logout();
-  router.push("/login");
-}
 </script>
 
 <template>
@@ -19,15 +9,9 @@ function logout() {
         <span class="logo-text">Sudoku</span>
       </RouterLink>
 
-      <div v-if="auth.isLoggedIn" class="nav-links">
+      <div class="nav-links">
         <RouterLink to="/" class="nav-link">Play</RouterLink>
         <RouterLink to="/dashboard" class="nav-link">Dashboard</RouterLink>
-        <div class="nav-user">
-          <span class="nav-username">{{ auth.user?.username }}</span>
-          <button class="btn btn-secondary btn-sm" @click="logout">
-            Logout
-          </button>
-        </div>
       </div>
     </div>
   </nav>
@@ -82,19 +66,5 @@ function logout() {
 .nav-link:hover,
 .nav-link.router-link-active {
   color: var(--text-primary);
-}
-
-.nav-user {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-left: 8px;
-  padding-left: 20px;
-  border-left: 1px solid var(--border);
-}
-
-.nav-username {
-  color: var(--text-secondary);
-  font-size: 0.85rem;
 }
 </style>

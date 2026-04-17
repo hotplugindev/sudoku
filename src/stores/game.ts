@@ -1,11 +1,19 @@
 import { defineStore } from "pinia";
-import { ref, reactive, computed } from "vue";
-import api from "@/api";
+import { computed, reactive, ref } from "vue";
+import {
+  addGameRecord,
+  addLeaderboardEntry,
+  updateGameRecord,
+} from "@/lib/localDb";
+import {
+  cloneGrid,
+  generatePuzzle,
+  isBoardComplete,
+  type Difficulty,
+} from "@/lib/sudoku";
 
-type Difficulty = "easy" | "medium" | "hard" | "expert";
 type GameStatus = "idle" | "in_progress" | "completed" | "abandoned";
 
-/** Create a fresh 9×9 grid of empty note sets. */
 function createEmptyNotes(): Set<number>[][] {
   return Array.from({ length: 9 }, () =>
     Array.from({ length: 9 }, () => new Set<number>()),
@@ -13,11 +21,10 @@ function createEmptyNotes(): Set<number>[][] {
 }
 
 export const useGameStore = defineStore("game", () => {
-  /* ── State ─────────────────────────────────────────────────────────── */
-
   const gameId = ref<string | null>(null);
   const difficulty = ref<Difficulty>("medium");
   const puzzle = ref<number[][]>([]);
+  const solution = ref<number[][]>([]);
   const current = ref<number[][]>([]);
   const locked = ref<boolean[][]>([]);
   const status = ref<GameStatus>("idle");
@@ -26,12 +33,9 @@ export const useGameStore = defineStore("game", () => {
   const completedAt = ref<number | null>(null);
   const isPaused = ref(false);
 
-  /* Pencil / notes — purely client-side */
   const pencilMode = ref(false);
   const greyOutCompleted = ref(false);
   const notes = reactive<Set<number>[][]>(createEmptyNotes());
-
-  /* ── Timer ─────────────────────────────────────────────────────────── */
 
   let timerInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -51,8 +55,6 @@ export const useGameStore = defineStore("game", () => {
     }
   }
 
-  /* ── Getters ───────────────────────────────────────────────────────── */
-
   const formattedTime = computed(() => {
     const mins = Math.floor(elapsed.value / 60);
     const secs = elapsed.value % 60;
@@ -63,8 +65,6 @@ export const useGameStore = defineStore("game", () => {
   const isFinished = computed(
     () => status.value === "completed" || status.value === "abandoned",
   );
-
-  /* ── Completed rows/cols/boxes ─────────────────────────────────────── */
 
   function isRowComplete(row: number): boolean {
     const seen = new Set<number>();
@@ -112,15 +112,14 @@ export const useGameStore = defineStore("game", () => {
     return false;
   }
 
-  /* ── Notes helpers ─────────────────────────────────────────────────── */
-
   function toggleNote(row: number, col: number, num: number) {
     if (!isPlaying.value) return;
     if (locked.value[row]?.[col]) return;
-    if (current.value[row]?.[col] !== 0) return; // has a placed number
+    if (current.value[row]?.[col] !== 0) return;
 
     const cellNotes = notes[row]?.[col];
     if (!cellNotes) return;
+
     if (cellNotes.has(num)) {
       cellNotes.delete(num);
     } else {
@@ -152,17 +151,19 @@ export const useGameStore = defineStore("game", () => {
     greyOutCompleted.value = !greyOutCompleted.value;
   }
 
-  /* ── Actions ───────────────────────────────────────────────────────── */
-
   async function newGame(diff: Difficulty) {
     stopTimer();
-    const { data } = await api.post("/game/new", { difficulty: diff });
 
-    gameId.value = data.id;
+    const game = generatePuzzle(diff);
+    const id = crypto.randomUUID();
+    const now = Date.now();
+
+    gameId.value = id;
     difficulty.value = diff;
-    puzzle.value = data.puzzle;
-    current.value = data.current;
-    locked.value = data.locked;
+    puzzle.value = cloneGrid(game.puzzle);
+    solution.value = cloneGrid(game.solution);
+    current.value = cloneGrid(game.puzzle);
+    locked.value = game.locked;
     status.value = "in_progress";
     elapsed.value = 0;
     selectedCell.value = null;
@@ -171,46 +172,98 @@ export const useGameStore = defineStore("game", () => {
     isPaused.value = false;
     clearAllNotes();
 
+    addGameRecord({
+      id,
+      difficulty: diff,
+      status: "in_progress",
+      startedAt: now,
+      elapsed: 0,
+      completedAt: null,
+    });
+
     startTimer();
-    return data;
+
+    return {
+      id,
+      difficulty: diff,
+      puzzle: cloneGrid(game.puzzle),
+      current: cloneGrid(game.puzzle),
+      locked: game.locked,
+      status: "in_progress" as const,
+      startedAt: now,
+      elapsed: 0,
+    };
   }
 
   async function makeMove(row: number, col: number, value: number) {
     if (!gameId.value || status.value !== "in_progress") return null;
+    if (row < 0 || row > 8 || col < 0 || col > 8) return null;
+    if (value < 0 || value > 9) return null;
+    if (locked.value[row]?.[col]) return null;
 
-    // Placing a real number clears any notes on that cell
     if (value !== 0) {
       clearNotes(row, col);
     }
 
-    const { data } = await api.post(`/game/${gameId.value}/move`, {
-      row,
-      col,
-      value,
+    current.value[row]![col] = value;
+
+    if (value !== 0 && isBoardComplete(current.value, solution.value)) {
+      const doneAt = Date.now();
+
+      status.value = "completed";
+      completedAt.value = doneAt;
+      stopTimer();
+
+      updateGameRecord(gameId.value, {
+        status: "completed",
+        elapsed: elapsed.value,
+        completedAt: doneAt,
+      });
+
+      addLeaderboardEntry({
+        gameId: gameId.value,
+        difficulty: difficulty.value,
+        time: elapsed.value,
+        completedAt: new Date(doneAt).toISOString(),
+      });
+
+      return {
+        current: cloneGrid(current.value),
+        status: status.value,
+        completedAt: doneAt,
+      };
+    }
+
+    updateGameRecord(gameId.value, {
       elapsed: elapsed.value,
     });
 
-    current.value = data.current;
-
-    if (data.status === "completed") {
-      status.value = "completed";
-      completedAt.value = data.completedAt;
-      stopTimer();
-    }
-
-    return data;
+    return {
+      current: cloneGrid(current.value),
+      status: status.value,
+      completedAt: completedAt.value,
+    };
   }
 
   async function abandonGame() {
     if (!gameId.value || status.value !== "in_progress") return;
 
-    const { data } = await api.post(`/game/${gameId.value}/abandon`);
     status.value = "abandoned";
+    completedAt.value = Date.now();
     stopTimer();
 
-    if (data.solution) {
-      current.value = data.solution;
-    }
+    current.value = cloneGrid(solution.value);
+
+    updateGameRecord(gameId.value, {
+      status: "abandoned",
+      elapsed: elapsed.value,
+      completedAt: completedAt.value,
+    });
+
+    return {
+      status: "abandoned" as const,
+      solution: cloneGrid(solution.value),
+    };
   }
 
   function selectCell(row: number, col: number) {
@@ -239,6 +292,7 @@ export const useGameStore = defineStore("game", () => {
     stopTimer();
     gameId.value = null;
     puzzle.value = [];
+    solution.value = [];
     current.value = [];
     locked.value = [];
     status.value = "idle";
